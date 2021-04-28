@@ -22,4 +22,3 @@
 {{ $.Scratch.SetInMap "graph" "links" $links }}
 
 {{ $.Scratch.Get "graph" | jsonify }}
-

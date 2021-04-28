@@ -14,9 +14,16 @@
 {{- end -}}
 " id="top">
     {{- partialCached "header.html" . .Page -}}
+
+    {{ if not .IsHome }}
     <main class="main">
         {{- block "main" . }}{{ end }}
     </main>
+    {{ else }}
+    <main>
+    {{- block "main" . }}{{ end }}
+    </main>
+    {{ end }}
     {{ partialCached "footer.html" . .Layout .Kind -}}
 </body>
 

@@ -19,7 +19,8 @@
 {{- $pages := union .RegularPages .Sections }}
 
 {{- if .IsHome }}
-{{- $pages = where site.RegularPages "Type" "in" site.Params.mainSections }}
+{{ .Content }}
+{{- $pages = .Pages }}
 {{- end }}
 
 {{- $paginator := .Paginate $pages }}
