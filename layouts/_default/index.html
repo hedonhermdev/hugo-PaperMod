@@ -1,46 +1,24 @@
 {{ define "main" }}
 
-{{ $.Scratch.Set "graph" dict }}
-
-{{ $nodes := slice }}
-{{ $links := slice }}
-
-{{ range $index, $page := .Site.AllPages }}
-    {{ $nodeID := (printf "%s%s" $page.File.Dir $page.File.BaseFileName) }}
-    {{ $nodeID = trim $nodeID "/" }}
-    {{ if ne $nodeID "" }}
-        {{ $node := dict "id" $nodeID "url" .RelPermalink }}
-        {{ $nodes = $nodes | append $node }}
-        {{ $refs := .Content | findRE "\\[\\[([^\\]\\[]+)\\]\\]" }}
-        {{ range $refs }}
-            {{ $path := . | replaceRE "[\\[\\]]" "" }} 
-            {{ $link := dict "source" $nodeID "target" $path }}
-            {{ $links = $links | append $link }}
-        {{ end }}
-    {{ end}}
-{{ end }}
-
-{{ $.Scratch.SetInMap "graph" "nodes" $nodes }}
-{{ $.Scratch.SetInMap "graph" "links" $links }}
 
 <div id="3d-graph"></div>
 <script>
 // Random tree
 
 const N = 80;
-const gData = JSON.parse({{ $.Scratch.Get "graph" | jsonify }});
+const gData = JSON.parse({{ readFile ".graph.json" }});
 console.log(gData);
 
 gData.nodes.forEach(node => {
+  if (node.id === "_index") {
+    node.defaultColor = "#aaa69d"
+  } else if (node.id.startsWith("notes")) {
+    node.defaultColor = '#706fd3'
+  } else if (node.id.startsWith("fleets")) {
+    node.defaultColor = '#34ace0'
+  }
   node.neighbors = [];
   node.links = [];
-  if (node.id == "_index") {
-    node.group = 3; 
-  } else if (node.id.includes("_index")) {
-    node.group = 2;
-  } else {
-    node.group = 1;
-  }
 })
 // cross-link node objects
 gData.links.forEach(link => {
@@ -69,12 +47,12 @@ const Graph = ForceGraph3D({extraRenderers: [new THREE.CSS2DRenderer()]})
     .graphData(gData)
     .backgroundColor('#1d1e20')
     .nodeLabel('id')
-    .nodeColor(node => highlightNodes.has(node) ? node === hoverNode ? '#f1faee' : '#a8dadc' : '#457b9d')
+    .nodeColor(node => highlightNodes.has(node) ? node === hoverNode ? '#f1faee' : '#a8dadc' : node.defaultColor )
     .linkWidth(link => highlightLinks.has(link) ? 1.2 : 1)
     .linkColor(link => highlightLinks.has(link) ? '#f1faee': 'rgba(255, 255, 255, 0.3)')
     .onNodeClick((node) => {
         Graph.onNodeClick((node) => {
-            const myWindow = window.location.assign(node.url);
+            const myWindow = window.location.assign(node.id.replace('_index', ''));
         })
     })
     .onNodeHover(node => {
@@ -104,7 +82,7 @@ const Graph = ForceGraph3D({extraRenderers: [new THREE.CSS2DRenderer()]})
       }
 
       updateHighlight();
-    });
+    })
 
 function updateHighlight() {
   // trigger update of highlighted objects in scene
